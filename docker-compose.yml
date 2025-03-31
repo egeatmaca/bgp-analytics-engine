@@ -58,3 +58,4 @@ services:
 
 volumes:
   spark-events:
+
