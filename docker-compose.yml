@@ -3,19 +3,16 @@ services:
     image: bgp-analytics-app
     build: ./docker/app
     container_name: bgp-analytics-app
-    entrypoint: "/bin/sh"
-    command: -c "jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root --no-browser --NotebookApp.token='' --NotebookApp.password=''; tail -f /dev/null"
     ports:
       - '8888:8888'
     volumes:
-      - .:/app
+      - ./src:/app/src
 
   spark-master:
     image: spark
     build: ./docker/spark
     container_name: spark-master
-    entrypoint: "/bin/sh"
-    command: -c "/opt/spark/sbin/start-master.sh; tail -f /dev/null"
+    command: start-master
     ports:
       - '8080:8080'
     volumes:
@@ -25,8 +22,7 @@ services:
     image: spark
     build: ./docker/spark
     container_name: spark-worker1
-    entrypoint: "/bin/sh"
-    command: -c "/opt/spark/sbin/start-worker.sh  spark://spark-master:7077; tail -f /dev/null"
+    command: start-worker
     volumes:
       - spark-events:/opt/spark/events
     
@@ -34,8 +30,7 @@ services:
     image: spark
     build: ./docker/spark
     container_name: spark-history-server
-    entrypoint: "/bin/sh"
-    command: -c "/opt/spark/sbin/start-history-server.sh; tail -f /dev/null"
+    command: start-history-server
     volumes:
       - spark-events:/opt/spark/events 
     ports:
@@ -45,7 +40,7 @@ services:
     image: postgres:13
     restart: always
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password

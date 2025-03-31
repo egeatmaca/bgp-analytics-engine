@@ -31,7 +31,9 @@ RUN wget -P ${SPARK_HOME}/jars/ https://jdbc.postgresql.org/download/postgresql-
 
 COPY ./spark-defaults.conf "${SPARK_HOME}/conf"
 
-ENTRYPOINT ["/bin/bash"]
+COPY ./entrypoint.sh .
+
+ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
 
 
 
