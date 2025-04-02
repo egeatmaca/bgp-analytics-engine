@@ -9,54 +9,54 @@ services:
       - ./src:/app/src
       - ./data:/app/data 
 
-  spark-master:
-    image: spark
-    build: ./docker/spark
-    container_name: spark-master
-    command: start-master
-    ports:
-      - '8080:8080'
-    volumes:
-      - spark-events:/opt/spark/events
+  # spark-master:
+  #   image: spark
+  #   build: ./docker/spark
+  #   container_name: spark-master
+  #   command: start-master
+  #   ports:
+  #     - '8080:8080'
+  #   volumes:
+  #     - spark-events:/opt/spark/events
 
-  spark-worker:
-    image: spark
-    build: ./docker/spark
-    container_name: spark-worker1
-    command: start-worker
-    volumes:
-      - spark-events:/opt/spark/events
+  # spark-worker:
+  #   image: spark
+  #   build: ./docker/spark
+  #   container_name: spark-worker1
+  #   command: start-worker
+  #   volumes:
+  #     - spark-events:/opt/spark/events
     
-  spark-history-server:
-    image: spark
-    build: ./docker/spark
-    container_name: spark-history-server
-    command: start-history-server
-    volumes:
-      - spark-events:/opt/spark/events 
-    ports:
-      - '18080:18080'
+  # spark-history-server:
+  #   image: spark
+  #   build: ./docker/spark
+  #   container_name: spark-history-server
+  #   command: start-history-server
+  #   volumes:
+  #     - spark-events:/opt/spark/events 
+  #   ports:
+  #     - '18080:18080'
 
-  postgres:
-    image: postgres:13
-    restart: always
-    # volumes:
-    #   - ./src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-    ports:
-      - "5432:5432"
+  # postgres:
+  #   image: postgres:13
+  #   restart: always
+  #   # volumes:
+  #   #   - ./src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   environment:
+  #     - POSTGRES_USER=user
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_DB=postgres
+  #   ports:
+  #     - "5432:5432"
 
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=root@root.com
-      - PGADMIN_DEFAULT_PASSWORD=root
-    ports:
-      - "8050:80"
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=root@root.com
+  #     - PGADMIN_DEFAULT_PASSWORD=root
+  #   ports:
+  #     - "8050:80"
 
-volumes:
-  spark-events:
+# volumes:
+#   spark-events:
 

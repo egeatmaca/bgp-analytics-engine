@@ -5,7 +5,8 @@ from time import time
 from update_writer import UpdateWriter
 
 class UpdateLoader:
-    TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+    IN_TIME_FMT = '%Y-%m-%d %H:%M:%S'
+    OUT_TIME_FMT = '%Y-%m-%d %H:%M:%S.%f'
 
     def __init__(self, 
                  collectors: list[str], 
@@ -14,8 +15,8 @@ class UpdateLoader:
                  filter: str=None,
                  n_proc: int = None) -> None:
         self.collectors = collectors
-        self.from_time = dt.datetime.strptime(from_time, self.TIME_FORMAT)
-        self.until_time = dt.datetime.strptime(until_time, self.TIME_FORMAT)
+        self.from_time = dt.datetime.strptime(from_time, self.IN_TIME_FMT)
+        self.until_time = dt.datetime.strptime(until_time, self.IN_TIME_FMT)
         self.filter = filter
         self.n_proc = n_proc if n_proc else mp.cpu_count() 
         
@@ -23,15 +24,15 @@ class UpdateLoader:
         time_delta = self.until_time - self.from_time
         range_seconds = time_delta.total_seconds() // self.n_proc
         range_delta = dt.timedelta(seconds=range_seconds)
-        one_second_delta = dt.timedelta(seconds=1)
+        microsecond_delta = dt.timedelta(microseconds=1)
 
         time_ranges = []
         for i in range(self.n_proc):
             start_timestamp = self.from_time + i * range_delta
             if i < self.n_proc - 1:
-                end_timestamp = self.from_time + (i+1) * range_delta - one_second_delta
+                end_timestamp = self.from_time + (i+1) * range_delta - microsecond_delta
             else:
-                end_timestamp = self.until_time
+                end_timestamp = self.until_time - microsecond_delta
             
             time_range = (start_timestamp, end_timestamp)
             time_ranges.append(time_range)
@@ -39,8 +40,8 @@ class UpdateLoader:
         return time_ranges
 
     def load_update_range(self, from_time, until_time):
-        from_time = from_time.strftime(self.TIME_FORMAT)
-        until_time = until_time.strftime(self.TIME_FORMAT)
+        from_time = from_time.strftime(self.OUT_TIME_FMT)
+        until_time = until_time.strftime(self.OUT_TIME_FMT)
         
         stream = pybgpstream.BGPStream(
             from_time=from_time, until_time=until_time,
