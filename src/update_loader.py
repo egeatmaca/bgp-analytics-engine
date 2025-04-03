@@ -133,8 +133,7 @@ class UpdateLoader:
 
         ctx = mp.get_context('spawn')
         with ctx.Pool(self.n_proc) as pool:
-            results = pool.starmap(self.load_update_range, time_ranges)
-            results.wait()
+            pool.starmap(self.load_update_range, time_ranges)
 
         finished_at = dt.datetime.now()
         time_delta = finished_at - started_at

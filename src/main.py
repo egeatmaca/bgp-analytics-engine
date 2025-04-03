@@ -1,5 +1,6 @@
 from update_loader import UpdateLoader 
 
+
 if __name__ == '__main__':
     loader = UpdateLoader(
         collectors=['route-views.eqix'],
