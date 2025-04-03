@@ -1,5 +1,4 @@
-# from update_loader_cy.update_loader import UpdateLoader 
-from update_loader.update_loader import UpdateLoader 
+from update_loader import UpdateLoader 
 
 if __name__ == '__main__':
     loader = UpdateLoader(
