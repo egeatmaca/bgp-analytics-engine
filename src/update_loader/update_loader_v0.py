@@ -2,7 +2,50 @@ import pybgpstream
 import multiprocessing as mp
 import datetime as dt
 from time import time
-from update_writer import UpdateWriter
+import os
+import csv
+
+
+class UpdateWriter:
+    def __init__(self, 
+                 file_name: str, 
+                 data_dir: str = './data',
+                 max_buffer: int = 100_000) -> None:
+        self.file_path = os.path.join(data_dir, file_name)
+        self.fields = ['record_type', 'type', 'time', 'project', 'collector', 
+                       'router', 'router_ip', 'peer_asn', 'peer_address', 
+                       'prefix', 'next_hop', 'as_path', 'communities']
+        self.rows: list[list] = []
+        self.row_counter = 0
+        self.max_buffer = max_buffer
+        os.makedirs(data_dir, exist_ok=True)
+
+    def buffer_full(self) -> bool:
+        return self.row_counter >= self.max_buffer
+
+    def buffer_empty(self) -> bool:
+        return self.row_counter == 0
+    
+    def add_to_buffer(self, update) -> None:
+        communities = ' '.join(update.fields["communities"]) if "communities" in update.fields else None,
+        update_row = [update.record_type, update.type, update.time, update.project, update.collector, update.router, update.router_ip,
+                      update.peer_asn, update.peer_address, update._maybe_field("prefix"), update._maybe_field("next-hop"), 
+                      update._maybe_field("as-path"), communities]
+        
+        self.rows.append(update_row)
+        self.row_counter += 1
+
+    def write_buffer(self) -> None:
+        data = [self.fields] + self.rows
+        with open(self.file_path, "a") as f:
+            writer = csv.writer(f)
+            writer.writerows(data)
+
+        print(f'{self.row_counter} rows inserted!')
+        
+        self.rows = []
+        self.row_counter = 0
+
 
 class UpdateLoader:
     IN_TIME_FMT = '%Y-%m-%d %H:%M:%S'
@@ -10,23 +53,23 @@ class UpdateLoader:
 
     def __init__(self, 
                  collectors: list[str], 
-                 from_time: str, 
-                 until_time: str,
-                 filter: str=None,
-                 n_proc: int = None) -> None:
+                 from_time_str: str, 
+                 until_time_str: str,
+                 filter: str|None = None,
+                 n_proc: int|None = None) -> None:
         self.collectors = collectors
-        self.from_time = dt.datetime.strptime(from_time, self.IN_TIME_FMT)
-        self.until_time = dt.datetime.strptime(until_time, self.IN_TIME_FMT)
+        self.from_time = dt.datetime.strptime(from_time_str, self.IN_TIME_FMT)
+        self.until_time = dt.datetime.strptime(until_time_str, self.IN_TIME_FMT)
         self.filter = filter
         self.n_proc = n_proc if n_proc else mp.cpu_count() 
         
-    def split_time_ranges(self):
+    def split_time_ranges(self) -> list[tuple[dt.datetime, dt.datetime]]:
         time_delta = self.until_time - self.from_time
         range_seconds = time_delta.total_seconds() // self.n_proc
         range_delta = dt.timedelta(seconds=range_seconds)
         microsecond_delta = dt.timedelta(microseconds=1)
 
-        time_ranges = []
+        time_ranges: list[tuple[dt.datetime, dt.datetime]] = []
         for i in range(self.n_proc):
             start_timestamp = self.from_time + i * range_delta
             if i < self.n_proc - 1:
@@ -39,12 +82,12 @@ class UpdateLoader:
 
         return time_ranges
 
-    def load_update_range(self, from_time, until_time):
-        from_time = from_time.strftime(self.OUT_TIME_FMT)
-        until_time = until_time.strftime(self.OUT_TIME_FMT)
+    def load_update_range(self, from_time: dt.datetime, until_time: dt.datetime):
+        from_time_str: str = from_time.strftime(self.OUT_TIME_FMT)
+        until_time_str: str = until_time.strftime(self.OUT_TIME_FMT)
         
         stream = pybgpstream.BGPStream(
-            from_time=from_time, until_time=until_time,
+            from_time=from_time_str, until_time=until_time_str,
             collectors=self.collectors,
             filter=self.filter,
             record_type="updates"
