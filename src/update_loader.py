@@ -11,7 +11,7 @@ class UpdateWriter:
     def __init__(self, 
                  file_name: str, 
                  data_dir: str = './data',
-                 n_rows: int = 250_000) -> None:
+                 n_rows: int = 100_000) -> None:
         self.header = ['record_type', 'type', 'time', 'project', 'collector', 
                        'router', 'router_ip', 'peer_asn', 'peer_address', 
                        'prefix', 'next_hop', 'as_path', 'communities']
