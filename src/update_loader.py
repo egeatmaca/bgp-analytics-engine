@@ -25,11 +25,23 @@ class UpdateWriter:
     def empty_rows(self) -> np.ndarray:
         return np.empty((self.n_rows, len(self.header)), dtype=object)
     
-    def buffer_full(self) -> bool:
-        return self.row_iter >= self.n_rows
+    def write_buffer(self) -> None:
+        if self.row_iter == 0:
+            return
 
-    def buffer_empty(self) -> bool:
-        return self.row_iter == 0
+        with open(self.file_path, "a") as f:
+            writer = csv.writer(f)
+
+            if not self.header_written:
+                writer.writerow(self.header)
+                self.header_written = True
+
+            writer.writerows(self.rows[:self.row_iter])
+
+        print(f'{self.row_iter} rows inserted!')
+        
+        self.rows = self.empty_rows()
+        self.row_iter = 0
    
     def add_to_buffer(self, update: BGPElem) -> None:
         if "communities" in update.fields: 
@@ -46,20 +58,8 @@ class UpdateWriter:
         self.rows[self.row_iter] = update_row
         self.row_iter += 1
 
-    def write_buffer(self) -> None:
-        with open(self.file_path, "a") as f:
-            writer = csv.writer(f)
-
-            if not self.header_written:
-                writer.writerow(self.header)
-                self.header_written = True
-
-            writer.writerows(self.rows[:self.row_iter])
-
-        print(f'{self.row_iter} rows inserted!')
-        
-        self.rows = self.empty_rows()
-        self.row_iter = 0
+        if self.row_iter >= self.n_rows:
+            self.write_buffer()
 
 
 class UpdateLoader:
@@ -94,36 +94,32 @@ class UpdateLoader:
             
             time_range = (start_timestamp, end_timestamp)
             time_ranges.append(time_range)
-
+        
         return time_ranges
     
     def load_update_range(self, from_time: dt.datetime, until_time: dt.datetime) -> None:
-        from_time_str: str = from_time.strftime(self.OUT_TIME_FMT)
-        until_time_str: str = until_time.strftime(self.OUT_TIME_FMT)
-        
+        from_time_str = from_time.strftime(self.OUT_TIME_FMT)
+        until_time_str = until_time.strftime(self.OUT_TIME_FMT)
+        update_file = f'{from_time_str} - {until_time_str}.csv'
+
         stream = BGPStream(
-            from_time=from_time_str, until_time=until_time_str,
+            from_time = from_time_str,
+            until_time = until_time_str,
             collectors=self.collectors,
             filter=self.filter_,
             record_type="updates"
         )
-
-        file_name = f'{from_time} - {until_time}.csv'
-        update_writer = UpdateWriter(file_name)
+        writer = UpdateWriter(update_file)
 
         for item in stream:
-            update_writer.add_to_buffer(item)
-            if update_writer.buffer_full():
-                update_writer.write_buffer()
+            writer.add_to_buffer(item)
 
-        if not update_writer.buffer_empty():
-            update_writer.write_buffer()
+        writer.write_buffer()
 
         print(f'Updates read from {from_time} until {until_time}!') 
 
     def load_updates(self) -> None:
         started_at = dt.datetime.now()
-
         time_ranges = self.split_time_ranges() 
         
         print(f'Reading Updates for Collectors {self.collectors}')
@@ -131,12 +127,12 @@ class UpdateLoader:
         for from_time, until_time in time_ranges:
             print('From:', from_time, '|', 'Until:', until_time)
 
-        ctx = mp.get_context('spawn')
-        with ctx.Pool(self.n_proc) as pool:
+        with mp.Pool(self.n_proc) as pool:
             pool.starmap(self.load_update_range, time_ranges)
 
         finished_at = dt.datetime.now()
         time_delta = finished_at - started_at
+
         print(f'Started At: {started_at}', f'Finished At: {finished_at}')
         print(f'Total Time: {time_delta}')
 
