@@ -28,6 +28,7 @@ services:
     command: start-worker
     volumes:
       - spark-events:/opt/spark/events
+      - ./data:/app/data
     
   spark-history-server:
     image: spark
