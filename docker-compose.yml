@@ -1,47 +1,49 @@
 services:
-  app:
-    image: bgp-analytics-app
-    build: ./docker/app
-    container_name: bgp-analytics-app
+  bgp-spark-client:
+    image: bgp-spark-client
+    build: ./docker/bgp-spark-client
+    container_name: bgp-spark-client
+    command: start-jupyter
     ports:
       - '8888:8888'
     volumes:
       - ./src:/app/src
+      - ./notebooks:/app/notebooks
       - ./data:/app/data 
 
-  # spark-master:
-  #   image: spark
-  #   build: ./docker/spark
-  #   container_name: spark-master
-  #   command: start-master
-  #   ports:
-  #     - '8080:8080'
-  #   volumes:
-  #     - spark-events:/opt/spark/events
+  spark-master:
+    image: spark
+    build: ./docker/spark
+    container_name: spark-master
+    command: start-master
+    ports:
+      - '8080:8080'
+    volumes:
+      - spark-events:/opt/spark/events
 
-  # spark-worker:
-  #   image: spark
-  #   build: ./docker/spark
-  #   container_name: spark-worker1
-  #   command: start-worker
-  #   volumes:
-  #     - spark-events:/opt/spark/events
+  spark-worker:
+    image: spark
+    build: ./docker/spark
+    container_name: spark-worker1
+    command: start-worker
+    volumes:
+      - spark-events:/opt/spark/events
     
-  # spark-history-server:
-  #   image: spark
-  #   build: ./docker/spark
-  #   container_name: spark-history-server
-  #   command: start-history-server
-  #   volumes:
-  #     - spark-events:/opt/spark/events 
-  #   ports:
-  #     - '18080:18080'
+  spark-history-server:
+    image: spark
+    build: ./docker/spark
+    container_name: spark-history-server
+    command: start-history-server
+    volumes:
+      - spark-events:/opt/spark/events 
+    ports:
+      - '18080:18080'
 
   # postgres:
   #   image: postgres:13
   #   restart: always
-  #   # volumes:
-  #   #   - ./src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   volumes:
+  #     - ./src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
   #   environment:
   #     - POSTGRES_USER=user
   #     - POSTGRES_PASSWORD=password
@@ -57,6 +59,6 @@ services:
   #   ports:
   #     - "8050:80"
 
-# volumes:
-#   spark-events:
+volumes:
+  spark-events:
 

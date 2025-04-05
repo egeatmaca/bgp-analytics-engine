@@ -7,7 +7,7 @@ import os
 import csv
 
 
-class UpdateWriter:
+class BGPStreamWriter:
     def __init__(self, 
                  file_name: str, 
                  data_dir: str = './data',
@@ -61,8 +61,14 @@ class UpdateWriter:
         if self.row_iter >= self.n_rows:
             self.write_buffer()
 
+    def write_stream(self, stream: BGPStream) -> None:
+        for update in stream:
+            writer.add_to_buffer(update)
 
-class UpdateLoader:
+        writer.write_buffer()
+
+
+class BGPStreamLoader:
     IN_TIME_FMT = '%Y-%m-%d %H:%M:%S'
     OUT_TIME_FMT = '%Y-%m-%d %H:%M:%S.%f'
 
@@ -109,13 +115,9 @@ class UpdateLoader:
             filter=self.filter_,
             record_type="updates"
         )
-        writer = UpdateWriter(update_file)
-
-        for item in stream:
-            writer.add_to_buffer(item)
-
-        writer.write_buffer()
-
+        writer = BGPStreamWriter(update_file)
+        writer.write_stream(stream)
+        
         print(f'Updates read from {from_time} until {until_time}!') 
 
     def load_updates(self) -> None:

@@ -1,10 +1,10 @@
-from update_loader import UpdateLoader 
+from bgpstream_loader import BGPStreamLoader 
 
 
 if __name__ == '__main__':
-    update_loader = UpdateLoader(
+    loader = BGPStreamLoader(
         collectors=['route-views.eqix'],
-        from_time="2023-07-07 00:00:00", 
-        until_time="2023-07-07 4:00:00"
+        from_time="2020-07-07 00:00:00", 
+        until_time="2020-07-14 00:00:00"
     )
-    update_loader.load_updates()
+    loader.load_updates()
