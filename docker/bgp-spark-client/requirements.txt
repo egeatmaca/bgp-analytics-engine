@@ -6,4 +6,5 @@ pandas==2.2.3
 plotly[express]==6.0.1
 dash==3.0.1
 notebook==7.3.3 
+jupyterlab-execute-time==3.2.0 
 
