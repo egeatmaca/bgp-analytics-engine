@@ -17,8 +17,7 @@ services:
     container_name: spark-master
     command: start-master
     ports:
-      - '8080:8080'
-      - '4040:4040' 
+      - '8080:8080' 
     volumes:
       - spark-events:/opt/spark/events
 
