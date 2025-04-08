@@ -52,7 +52,6 @@ class BGPStreamLoader:
 
         with open(file_path, "a") as f:
             writer = csv.writer(f)
-            print('WRITING HEADER!')
             writer.writerow(self.header)
             for update in stream:
                 update_parsed = self.parse_update(update)
